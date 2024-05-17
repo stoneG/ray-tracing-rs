@@ -5,7 +5,20 @@ use std::io::{stderr, Write};
 use vec::{Color, Point3, Vec3};
 use ray::Ray;
 
+fn hit_sphere(center: Point3, radius: f64, ray: &Ray) -> bool {
+    let oc = ray.origin() - center;
+    let a = ray.direction().dot(ray.direction());
+    let b = -2.0 * ray.direction().dot(oc);
+    let c = oc.dot(oc) - radius * radius;
+    let discriminant = b * b - 4.0 * a * c;
+    discriminant > 0.0
+}
+
 fn ray_color(r: &Ray) -> Color {
+    if hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) {
+        return Color::new(1.0, 0.0, 0.0);
+    }
+
     let unit_ray = r.direction().normalized();
     let t = 0.5 * (unit_ray.y() + 1.0);
 

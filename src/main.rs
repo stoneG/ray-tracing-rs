@@ -5,21 +5,31 @@ use std::io::{stderr, Write};
 use vec::{Color, Point3, Vec3};
 use ray::Ray;
 
-fn hit_sphere(center: Point3, radius: f64, ray: &Ray) -> bool {
-    let oc = ray.origin() - center;
+fn hit_sphere(center: Point3, radius: f64, ray: &Ray) -> f64 {
+    let oc = center - ray.origin();
     let a = ray.direction().dot(ray.direction());
-    let b = -2.0 * ray.direction().dot(oc);
+    let b = -2.0 * oc.dot(ray.direction());
     let c = oc.dot(oc) - radius * radius;
     let discriminant = b * b - 4.0 * a * c;
-    discriminant > 0.0
+    let mut hits = 0.0;
+
+    if discriminant < 0.0 {
+        -1.0
+    } else {
+        hits += 1.0;
+        eprint!("\rHit SPhere {}", hits);
+        (-b - discriminant.sqrt()) / (2.0 * a)
+    }
 }
 
-fn ray_color(r: &Ray) -> Color {
-    if hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) {
-        return Color::new(1.0, 0.0, 0.0);
+fn ray_color(ray: &Ray) -> Color {
+    let t = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, ray);
+    if t > 0.0 {
+        let n = (ray.at(t) - Point3::new(0.0, 0.0, -1.0)).normalized();
+        return 0.5 * Color::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0);
     }
 
-    let unit_ray = r.direction().normalized();
+    let unit_ray = ray.direction().normalized();
     let t = 0.5 * (unit_ray.y() + 1.0);
 
     // hard code a linear interpolation from white to blue
@@ -29,8 +39,8 @@ fn ray_color(r: &Ray) -> Color {
 fn main() {
     // Image
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
-    const IMAGE_WIDTH: u64 = 256;
-    const IMAGE_HEIGHT: u64 = ((256 as f64) / ASPECT_RATIO) as u64;
+    const IMAGE_WIDTH: u64 = 500;
+    const IMAGE_HEIGHT: u64 = ((500 as f64) / ASPECT_RATIO) as u64;
 
     // Camera
     let viewport_height = 2.0;
@@ -54,14 +64,14 @@ fn main() {
             let u = (i as f64) / ((IMAGE_WIDTH - 1) as f64);
             let v = (j as f64) / ((IMAGE_HEIGHT - 1) as f64);
 
-            let r = Ray::new(
+            let ray = Ray::new(
                 origin,
-                lower_left_corner + u * horizontal + v * vertical
+                lower_left_corner + u * horizontal + v * vertical - origin
             );
-            let pixel_color = ray_color(&r);
 
+            let pixel_color = ray_color(&ray);
             println!("{}", pixel_color.format_color());
         }
     }
-    eprintln!("Done.");
+    eprintln!("\nDone.");
 }

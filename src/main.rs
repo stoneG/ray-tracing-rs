@@ -17,7 +17,7 @@ fn ray_color(ray: &Ray, world: &World, depth: u64) -> Color {
         // If we've exceeded the ray bounce limit, no more light is gathered
         return Color::new(0.0, 0.0, 0.0);
     }
-    if let Some(rec) = world.hit(ray, 0.0, f64::INFINITY) {
+    if let Some(rec) = world.hit(ray, 0.001, f64::INFINITY) {
         let target = rec.p + rec.normal + Vec3::random_in_unit_sphere();
         let ray = Ray::new(rec.p, target - rec.p);
         0.5 * ray_color(&ray, world, depth - 1)

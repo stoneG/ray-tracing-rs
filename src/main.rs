@@ -5,6 +5,7 @@ mod sphere;
 mod camera;
 
 use std::io::{stderr, Write};
+use rand::Rng;
 use vec::{Color, Point3, Vec3};
 use ray::Ray;
 use hit::{Hit, World};
@@ -44,21 +45,25 @@ fn main() {
     println!("{} {}", IMAGE_WIDTH, IMAGE_HEIGHT);
     println!("255");
 
+    let mut rng = rand::thread_rng();
     for j in (0..IMAGE_HEIGHT).rev() {
         eprint!("\rScanlines remaining: {:3}", IMAGE_HEIGHT - j - 1);
         stderr().flush().unwrap();
 
         for i in 0..IMAGE_WIDTH {
-            let u = (i as f64) / ((IMAGE_WIDTH - 1) as f64);
-            let v = (j as f64) / ((IMAGE_HEIGHT - 1) as f64);
+            let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+            for _ in 0..SAMPLES_PER_PIXEL {
+                let random_u: f64 = rng.gen();
+                let random_v: f64 = rng.gen();
 
-            let ray = Ray::new(
-                origin,
-                lower_left_corner + u * horizontal + v * vertical - origin
-            );
+                let u = ((i as f64) + random_u) / ((IMAGE_WIDTH - 1) as f64);
+                let v = ((j as f64) + random_v) / ((IMAGE_HEIGHT - 1) as f64);
 
-            let pixel_color = ray_color(&ray, &world);
-            println!("{}", pixel_color.format_color());
+                let ray = cam.get_ray(u, v);
+                pixel_color += ray_color(&ray, &world);
+            }
+
+            println!("{}", pixel_color.format_color(SAMPLES_PER_PIXEL));
         }
     }
     eprintln!("\nDone.");

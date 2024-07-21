@@ -18,7 +18,7 @@ fn ray_color(ray: &Ray, world: &World, depth: u64) -> Color {
         return Color::new(0.0, 0.0, 0.0);
     }
     if let Some(rec) = world.hit(ray, 0.001, f64::INFINITY) {
-        let target = rec.p + rec.normal + Vec3::random_in_unit_sphere();
+        let target = rec.p + Vec3::random_in_hemisphere(rec.normal);
         let ray = Ray::new(rec.p, target - rec.p);
         0.5 * ray_color(&ray, world, depth - 1)
     } else {

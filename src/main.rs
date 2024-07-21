@@ -1,39 +1,24 @@
 mod vec;
 mod ray;
+mod hit;
+mod sphere;
 
 use std::io::{stderr, Write};
 use vec::{Color, Point3, Vec3};
 use ray::Ray;
+use hit::{Hit, World};
+use sphere::Sphere;
 
-fn hit_sphere(center: Point3, radius: f64, ray: &Ray) -> f64 {
-    let oc = center - ray.origin();
-    let a = ray.direction().dot(ray.direction());
-    let b = -2.0 * oc.dot(ray.direction());
-    let c = oc.dot(oc) - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
-    let mut hits = 0.0;
-
-    if discriminant < 0.0 {
-        -1.0
+fn ray_color(ray: &Ray, world: &World) -> Color {
+    if let Some(rec) = world.hit(ray, 0.0, f64::INFINITY) {
+        0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0))
     } else {
-        hits += 1.0;
-        eprint!("\rHit SPhere {}", hits);
-        (-b - discriminant.sqrt()) / (2.0 * a)
+        let unit_ray = ray.direction().normalized();
+        let t = 0.5 * (unit_ray.y() + 1.0);
+
+        // hard code a linear interpolation from white to blue
+        (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
     }
-}
-
-fn ray_color(ray: &Ray) -> Color {
-    let t = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, ray);
-    if t > 0.0 {
-        let n = (ray.at(t) - Point3::new(0.0, 0.0, -1.0)).normalized();
-        return 0.5 * Color::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0);
-    }
-
-    let unit_ray = ray.direction().normalized();
-    let t = 0.5 * (unit_ray.y() + 1.0);
-
-    // hard code a linear interpolation from white to blue
-    (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
 }
 
 fn main() {
@@ -41,6 +26,11 @@ fn main() {
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: u64 = 500;
     const IMAGE_HEIGHT: u64 = ((500 as f64) / ASPECT_RATIO) as u64;
+
+    // World
+    let mut world = World::new();
+    world.push(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+    world.push(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
 
     // Camera
     let viewport_height = 2.0;
@@ -69,7 +59,7 @@ fn main() {
                 lower_left_corner + u * horizontal + v * vertical - origin
             );
 
-            let pixel_color = ray_color(&ray);
+            let pixel_color = ray_color(&ray, &world);
             println!("{}", pixel_color.format_color());
         }
     }

@@ -41,7 +41,7 @@ fn main() {
     const IMAGE_WIDTH: u64 = 500;
     const IMAGE_HEIGHT: u64 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u64;
     const SAMPLES_PER_PIXEL: u64 = 100;
-    const MAX_DEPTH: u64 = 4;
+    const MAX_DEPTH: u64 = 5;
 
     // World
     let mut world = World::new();
